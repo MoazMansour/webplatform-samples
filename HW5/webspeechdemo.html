@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="speakClient.js"></script>
+<title>Web Speech API Demo</title>
+<style>
+  * {
+    font-family: Verdana, Arial, sans-serif;
+  }
+  a:link {
+    color:#000;
+    text-decoration: none;
+  }
+  a:visited {
+    color:#000;
+  }
+  a:hover {
+    color:#33F;
+  }
+  .button {
+    background: -webkit-linear-gradient(top,#008dfd 0,#0370ea 100%);
+    border: 1px solid #076bd2;
+    border-radius: 3px;
+    color: #fff;
+    /*display: none;*/
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 1.3;
+    padding: 8px 25px;
+    text-align: center;
+    text-shadow: 1px 1px 1px #076bd2;
+    letter-spacing: normal;
+  }
+  .center {
+    padding: 10px;
+    text-align: center;
+  }
+  .final {
+    color: black;
+    padding-right: 3px;
+  }
+  .interim {
+    color: gray;
+  }
+  .info {
+    font-size: 14px;
+    text-align: center;
+    color: #777;
+    display: none;
+  }
+  .right {
+    float: right;
+  }
+  .sidebyside {
+    display: inline-block;
+    width: 45%;
+    min-height: 40px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .sidebyside2 {
+    display: inline-block;
+    width: 30%;
+    min-height: 40px;
+    text-align: left;
+    vertical-align: top;
+  }
+  #headline {
+    font-size: 40px;
+    font-weight: 300;
+  }
+  #info {
+    font-size: 20px;
+    text-align: center;
+    color: #777;
+    visibility: hidden;
+  }
+  #results {
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: left;
+    min-height: 150px;
+  }
+  #start_button {
+    border: 0;
+    background-color:transparent;
+    padding: 0;
+  }
+/*----------------------------------------------
+Timer Style*/
+  .Task1 {
+    margin: auto;
+    width: 50%;
+    background-color: rgba(0, 120, 255, 0.5);
+    margin-top: 15%;
+    text-align: center;
+    font-size: 22px;
+    display: none;
+    padding: 8px 25px;
+  }
+
+  .Task2 {
+    margin: auto;
+    width: 50%;
+    background-color: rgba(0, 120, 255, 0.5);
+    margin-top: 15%;
+    text-align: left;
+    font-size: 16px;
+    display: none;
+    padding: 8px 25px;
+  }
+
+  #googleSearch {
+    display: none;
+  }
+
+  #instructions {
+    margin: auto;
+    margin-top: 3%;
+    text-align: left;
+    font-size: 16px;
+    padding: 8px 25px;
+  }
+/*----------------------------------------------
+*/
+</style>
+<h1 class="center" id="headline">
+  <a href="http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html">
+    Web Speech API</a> Demonstration</h1>
+
+<!-- My Instructiosn -->
+<div id = "instructions">
+  CSC 410: Homework 5.<br>
+  Moaz Mansour<br>
+  Please read the instructions below:
+  <ul>
+    <li>Refresh is always required before activiating any task</li>
+    <li>The mic button is not working anymore</li>
+    <li>Please refresh the page if you wanna reset a certain task, clicking the buttong will not work</li>
+    <li>I left the copy and e-mail buttons, but they are not working</li>
+  </ul>
+</div>
+<!-- ########################################### -->
+
+<div id="info">
+  <p id="info_start">Click on the microphone icon and begin speaking.</p>
+  <p id="info_speak_now">Speak now.</p>
+  <p id="info_no_speech">No speech was detected. You may need to adjust your
+    <a href="//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">
+      microphone settings</a>.</p>
+  <p id="info_no_microphone" style="display:none">
+    No microphone was found. Ensure that a microphone is installed and that
+    <a href="//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">
+    microphone settings</a> are configured correctly.</p>
+  <p id="info_allow">Click the "Allow" button above to enable your microphone.</p>
+  <p id="info_denied">Permission to use microphone was denied.</p>
+  <p id="info_blocked">Permission to use microphone is blocked. To change,
+    go to chrome://settings/contentExceptions#media-stream</p>
+  <p id="info_upgrade">Web Speech API is not supported by this browser.
+     Upgrade to <a href="//www.google.com/chrome">Chrome</a>
+     version 25 or later.</p>
+</div>
+<div class="right">
+  <!--<button id="start_button" onclick="startButton(event)">-->
+  <button id="start_button">
+    <img id="start_img" src="mic.gif" alt="Start"></button>
+</div>
+<div id="results">
+  <span id="final_span" class="final"></span>
+  <span id="interim_span" class="interim"></span>
+  <p>
+</div>
+<div class="center">
+  <div class="sidebyside" style="text-align:right">
+    <button id="copy_button" class="button">
+      Copy and Paste</button>
+    <div id="copy_info" class="info">
+      Press Control-C to copy text.<br>(Command-C on Mac.)
+    </div>
+  </div>
+  <div class="sidebyside">
+    <button id="email_button" class="button">
+      Create Email</button>
+    <div id="email_info" class="info">
+      Text sent to default email application.<br>
+      (See chrome://settings/handlers to change.)
+    </div>
+  </div>
+  <p>
+  <div id="div_language">
+    <select id="select_language" onchange="updateCountry()"></select>
+    &nbsp;&nbsp;
+    <select id="select_dialect"></select>
+  </div>
+</div>
+
+<!-- Start of My HTML Code
+###################################################
+Task#1 button  Speaking Rate Detection::-->
+<div class = "center">
+  <div class="sidebyside2" style="text-align:center">
+    <button id="Task1" class="button" onclick="Task1Button()">
+      Task#1:Speaking Rate</button>
+  </div>
+<!--Task#2 button:-->
+
+  <div class="sidebyside2" style="text-align:center">
+    <button id="Task2" class="button" onclick="Task2Button()">
+      Task#2:Automated Agent</button>
+  </div>
+<!--Task#3 button:-->
+  <div class="sidebyside2"  style="text-align:center">
+    <button id="Task3" class="button" onclick="Task3Button()">
+      Task#3:Okay Google</button>
+  </div>
+
+</div>
+
+
+<!--Task#1 Speedtometer:-->
+<p id="speechrate" class = "Task1"></p>
+<p id="responsecontainer" class = "Task2"></p>
+<div id="audio"></div>
+<div id="googleSearch">
+  <script>
+    (function() {
+      var cx = '005175715958333511333:tlkdeuwzuza';
+      var gcse = document.createElement('script');
+      gcse.type = 'text/javascript';
+      gcse.async = true;
+      gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(gcse, s);
+    })();
+  </script>
+  <gcse:search gname="searcher" id="ayKalam"></gcse:search>
+</div>
+
+<!-- End of HTML edits
+######################################################
+-->
+
+<script>
+/* Scripts to my code
+######################################################
+*/
+/*Task#3 Show Spedometer:*/
+
+function Task3Button(){
+  responsecontainer.style.display = 'none';
+  speechrate.style.display = 'none';
+  googleSearch.style.display = 'block';
+  startButton();
+  var myVar = setTimeout(listen,4000);
+}
+
+var search;
+  window.onload = function() {
+     search = google.search.cse.element.getElement('searcher');
+  };
+
+function listen(){
+  var user_response = final_transcript;
+  startButton();
+  if (user_response.includes("OK") && user_response.includes("Google")){
+    myVar = setTimeout(startButton,2000);
+    myVar = setTimeout(listen_search,9000);
+  } else {
+    var myVar = setTimeout(Task3Button,1000);
+  }
+}
+
+function listen_search(){
+  var user_response = final_transcript;
+  startButton();
+  if(user_response) {
+    search.execute(user_response);
+  } else {
+    lets_search();
+  }
+}
+
+/*Task#1 Show Spedometer:*/
+
+function Task1Button() {
+  responsecontainer.style.display = 'none';
+  googleSearch.style.display = 'none';
+  speechrate.style.display = 'block';
+  startButton();
+  var myVar = setInterval(myTimer, 1000);
+  showInfo('');
+}
+
+/*count the words in a given string
+--used to count the words in each final_transcript*/
+function get_word_count(str) {
+  if (str.length == 0) {
+	return 0;
+  } else {
+	return str.match(/\S+/g).length;
+  }
+}
+
+/*defining counters for speedometer
+*/
+var min_count = 0;
+var words_count = 0;
+var sec_count = 0;
+var sec_show = 0;
+var rate = 0;
+var error = '<br> &nbsp;';
+
+/*starting timer to test track speaking speed and update every 5 secs
+*/
+
+
+function myTimer() {
+  sec_count+=1;
+  sec_show+=1;
+  if (sec_show == 60) {
+    min_count+= 1;
+    sec_show = 0;
+  }
+  if ((sec_show%5) == 0) {
+    check_error();
+  }
+  rate = Math.round(60 * (get_word_count(final_transcript)/sec_count));
+  document.getElementById("speechrate").innerHTML = '<b>Speed:</b> ' + rate + ' <font size = "4px"><em>Words/Min</em></font> <b>Timer:</b> ' + (min_count) + ":" + sec_show + error;
+}
+
+function check_error(){
+  if (rate < 133){
+    error = '<br><b><font color = "Red"> Too Slow </color></b>';
+  }
+  else if(rate > 188) {
+    error = '<br><b><font color = "Red"> Too Fast </color></b>';
+  }
+  else {
+    error = '<br><b><font color = "Green"> Good Job </color></b>';
+  }
+  return;
+}
+
+/*Task#2::: Technical Support Call*/
+
+var no_response_count = 0;
+var Problem = false;
+var payment_step = 0;
+
+function Task2Button() {
+  responsecontainer.style.display = 'block';
+  speechrate.style.display = 'none';
+  googleSearch.style.display = 'none';
+
+  if (recognizing) {
+    startButton();
+  }
+  response(1);
+  myVar = setTimeout(startButton, 10000);
+  myVar = setTimeout(read_response, 15000);
+  showInfo('');
+}
+
+function read_response(){
+    var user_response = final_transcript;
+    startButton();
+    if (user_response.includes("Account") || user_response.includes("account")){
+      no_response_count = 0;
+      response(4);
+    }
+    else if (user_response.includes("Technical") || user_response.includes("technical")) {
+      no_response_count = 0;
+      response(5);
+    }
+    else if (user_response.includes("Product") || user_response.includes("product")) {
+      no_response_count = 0;
+      response(14);
+    }
+    else {
+      no_response_count+=1
+      if (no_response_count <= 3){
+        response(2);
+      }
+      else {
+        response(3);
+      }
+    }
+}
+
+function response(n) {
+  if (n == 1) {
+    document.getElementById("responsecontainer").innerHTML = 'Hello, This is Jarvis your virtual technical assistant. You can ask me things like <ol><li>Account Information</li><li>Technical Support</li><li>Product Information</li></ol>';
+    speak('Hello, This is Jarvis your virtual technical assistant. You can ask me things like Account Information Technical Support and Product Information');
+  }
+  else if (n == 2) {
+    document.getElementById("responsecontainer").innerHTML = 'No Proper respond received, please try again!';
+    speak('No Proper respond received, please try again!');
+    myVar = setTimeout(startButton, 5000);
+    myVar = setTimeout(read_response, 12000);
+  }
+  else if (n == 3) {
+    document.getElementById("responsecontainer").innerHTML = 'It seems like I’m unable to help you, I will connect you to the next available agent, please wait.';
+    speak ('It seems like I’m unable to help you, I will connect you to the next available agent, please wait.');
+  }
+  else if (n == 4) {
+    document.getElementById("responsecontainer").innerHTML = 'What Exactly Would you like to do with your Account? <ul><li>Check Account</li><li>Pay Balance</li><li>Payment process</li></ul>';
+    speak ('What Exactly Would you like to do with your Account? Check Account, Pay Balance or Payment process');
+    myVar = setTimeout(startButton, 7000);
+    myVar = setTimeout(Account_info, 12000);
+  }
+  else if (n == 5) {
+    Problem = true;
+    document.getElementById("responsecontainer").innerHTML = 'Please briefly describe your problem';
+    speak('Please briefly describe your problem');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(Technical_support, 9000);
+  }
+  else if (n == 6) {
+    document.getElementById("responsecontainer").innerHTML = 'I will connect you to the next available agent for Payment Process, please wait.';
+    speak('I will connect you to the next available agent for Payment Process, please wait.');
+  }
+  else if (n == 7) {
+    document.getElementById("responsecontainer").innerHTML = 'I will connect you to the next available agent to Pay your balance, please wait.';
+    speak('I will connect you to the next available agent to Pay your balance, please wait.');
+  }
+  else if (n == 8) {
+    document.getElementById("responsecontainer").innerHTML = 'I will connect you to the next available agent to Check your account, please wait.';
+    speak('I will connect you to the next available agent to Check your account, please wait.');
+  }
+  else if (n == 9) {
+    Problem = false;
+    document.getElementById("responsecontainer").innerHTML = 'Have you tried turning it off and on?';
+    speak('Have you tried turning it off and on?');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(Technical_support, 7000);
+  }
+  else if (n == 10) {
+    document.getElementById("responsecontainer").innerHTML = 'We will connect you to the next available technical agent, please wait!';
+    speak('We will connect you to the next available technical agent, please wait!');
+  }
+  else if (n == 11) {
+    Problem = true;
+    document.getElementById("responsecontainer").innerHTML = 'Please try turnning it off and on. Will check with you in 10 seconds';
+    speak('Please try turnning it off and on. Will check with you in 10 seconds');
+    myVar = setTimeout(check_support, 15000);
+  }
+  else if (n == 12) {
+    Problem = false;
+    document.getElementById("responsecontainer").innerHTML = 'Did it work?';
+    speak('Did it work?');
+    myVar = setTimeout(startButton, 1600);
+    myVar = setTimeout(check_support, 6000);
+  }
+  else if (n == 13) {
+    document.getElementById("responsecontainer").innerHTML = 'I am glad I was able to help. Have a good day!';
+    speak('I am glad I was able to help. Have a good day!');
+  }
+  else if (n == 14) {
+    document.getElementById("responsecontainer").innerHTML = 'Which product would you like to purchase today? <ul><li>MyWatch</li><li>MyPhone</li></ul>';
+    speak('Which product would you like to purchase today? MyWatch or MyPhone');
+    myVar = setTimeout(startButton, 5500);
+    myVar = setTimeout(myProduct, 10000);
+  }
+  else if (n == 15) {
+    document.getElementById("responsecontainer").innerHTML = 'We are sorry we are out of watches. Please call us back in 10 days!';
+    speak('We are sorry we are out of watches. Please call us back in 10 days!');
+  }
+  else if (n == 16) {
+    payment_step = 2;
+    document.getElementById("responsecontainer").innerHTML = 'Please provide your credit card number';
+    speak('Please provide your credit card number');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(paymentprocess, 14000);
+  }
+  else if (n == 17) {
+    payment_step = 3;
+    document.getElementById("responsecontainer").innerHTML = 'Please provide expiration date';
+    speak('Please provide expiration date');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(paymentprocess, 9000);
+  }
+  else if (n == 18) {
+    payment_step = 4;
+    document.getElementById("responsecontainer").innerHTML = 'Please provide security code at the back';
+    speak('Please provide security code at the back');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(paymentprocess, 10000);
+  }
+  else if (n == 19) {
+    document.getElementById("responsecontainer").innerHTML = 'Thanks for Purchasing the MyPhone. Have a good Day!';
+    speak('Thanks for Purchasing the MyPhone. Have a good Day!');
+  }
+  else if (n == 20) {
+    document.getElementById("responsecontainer").innerHTML = 'No Proper respond received, please try again!';
+    speak('No Proper respond received, please try again!');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(Account_info, 12000);
+  }
+  else if (n == 21) {
+    document.getElementById("responsecontainer").innerHTML = 'No Proper respond received, please try again!';
+    speak('No Proper respond received, please try again!');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(Technical_support, 12000);
+  }
+  else if (n == 22) {
+    document.getElementById("responsecontainer").innerHTML = 'No Proper respond received, please try again!';
+    speak('No Proper respond received, please try again!');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(check_support, 12000);
+  }
+  else if (n == 23) {
+    document.getElementById("responsecontainer").innerHTML = 'No Proper respond received, please try again!';
+    speak('No Proper respond received, please try again!');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(myProduct, 12000);
+  }
+  else if (n == 24) {
+    document.getElementById("responsecontainer").innerHTML = 'No Proper respond received, please try again!';
+    speak('No Proper respond received, please try again!');
+    myVar = setTimeout(startButton, 3000);
+    myVar = setTimeout(paymentprocess, 12000);
+  }
+}
+
+function Account_info(){
+  var user_response = final_transcript;
+  startButton();
+  if (user_response.includes("Check") || user_response.includes("check")) {
+    no_response_count = 0;
+    response(8);
+  } else if (user_response.includes("balance") || user_response.includes("Balance") ) {
+    no_response_count = 0;
+    response(7);
+  } else if (user_response.includes("Process") || user_response.includes("process")) {
+    no_response_count = 0;
+    response(6);
+  } else {
+      no_response_count+=1
+      if (no_response_count <= 3){
+        response(20);
+      }
+      else {
+        response(3);
+    }
+  }
+}
+
+function Technical_support(){
+  if (Problem) {
+    startButton();
+    response(9);
+  } else {
+    var user_response = final_transcript;
+    startButton();
+    if (user_response.includes("Yes")) {
+      no_response_count = 0;
+      response(10);
+    } else if (user_response.includes("No")) {
+      no_response_count = 0;
+      response(11);
+    } else {
+        no_response_count+=1
+        if (no_response_count <= 3){
+          response(21);
+        }
+        else {
+          response(3);
+      }
+    }
+  }
+}
+
+function check_support(){
+  if (Problem) {
+    response(12);
+  } else {
+    var user_response = final_transcript;
+    startButton();
+    if (user_response.includes("Yes")) {
+      no_response_count = 0;
+      response(13);
+    } else if (user_response.includes("No")) {
+      no_response_count = 0;
+      response(10);
+    } else {
+        no_response_count+=1
+        if (no_response_count <= 3){
+          response(22);
+        }
+        else {
+          response(3);
+      }
+    }
+  }
+}
+
+function myProduct(){
+  var user_response = final_transcript;
+  startButton();
+  if (user_response.includes("watch") || user_response.includes("Watch")) {
+    no_response_count = 0;
+    response(15);
+  } else if (user_response.includes("phone") || user_response.includes("Phone")) {
+    no_response_count = 0;
+    payment_step = 1;
+    paymentprocess();
+  } else {
+    no_response_count+=1
+    if (no_response_count <= 3){
+      response(23);
+    }
+    else {
+      response(3);
+    }
+  }
+}
+
+function paymentprocess(){
+  if (payment_step == 1) {
+    response(16);
+  }
+  else if (payment_step == 2) {
+    var user_response = final_transcript;
+    startButton();
+    var L = get_word_count(user_response);
+    if (L == 12){
+      no_response_count = 0;
+      response(17);
+    } else {
+        no_response_count+=1
+        if (no_response_count <= 3){
+          response(24);
+        }
+        else {
+          response(3);
+        }
+      }
+    } else if (payment_step == 3) {
+    user_response = final_transcript;
+    startButton();
+    if (user_response) {
+      no_response_count = 0;
+      response(18);
+    } else {
+        no_response_count+=1
+        if (no_response_count <= 3){
+          response(24);
+        }
+        else {
+          response(3);
+        }
+      }
+    } else if (payment_step == 4) {
+    var user_response = final_transcript;
+    startButton();
+    var L = get_word_count(user_response)
+    if (L == 3){
+      no_response_count = 0;
+      response(19);
+    } else {
+        no_response_count+=1
+        if (no_response_count <= 3){
+          response(24);
+        }
+        else {
+          response(3);
+        }
+      }
+  }
+}
+/* End
+######################################################
+*/
+
+var langs =
+[['Afrikaans',       ['af-ZA']],
+ ['Bahasa Indonesia',['id-ID']],
+ ['Bahasa Melayu',   ['ms-MY']],
+ ['Català',          ['ca-ES']],
+ ['Čeština',         ['cs-CZ']],
+ ['Deutsch',         ['de-DE']],
+ ['English',         ['en-AU', 'Australia'],
+                     ['en-CA', 'Canada'],
+                     ['en-IN', 'India'],
+                     ['en-NZ', 'New Zealand'],
+                     ['en-ZA', 'South Africa'],
+                     ['en-GB', 'United Kingdom'],
+                     ['en-US', 'United States']],
+ ['Español',         ['es-AR', 'Argentina'],
+                     ['es-BO', 'Bolivia'],
+                     ['es-CL', 'Chile'],
+                     ['es-CO', 'Colombia'],
+                     ['es-CR', 'Costa Rica'],
+                     ['es-EC', 'Ecuador'],
+                     ['es-SV', 'El Salvador'],
+                     ['es-ES', 'España'],
+                     ['es-US', 'Estados Unidos'],
+                     ['es-GT', 'Guatemala'],
+                     ['es-HN', 'Honduras'],
+                     ['es-MX', 'México'],
+                     ['es-NI', 'Nicaragua'],
+                     ['es-PA', 'Panamá'],
+                     ['es-PY', 'Paraguay'],
+                     ['es-PE', 'Perú'],
+                     ['es-PR', 'Puerto Rico'],
+                     ['es-DO', 'República Dominicana'],
+                     ['es-UY', 'Uruguay'],
+                     ['es-VE', 'Venezuela']],
+ ['Euskara',         ['eu-ES']],
+ ['Français',        ['fr-FR']],
+ ['Galego',          ['gl-ES']],
+ ['Hrvatski',        ['hr_HR']],
+ ['IsiZulu',         ['zu-ZA']],
+ ['Íslenska',        ['is-IS']],
+ ['Italiano',        ['it-IT', 'Italia'],
+                     ['it-CH', 'Svizzera']],
+ ['Magyar',          ['hu-HU']],
+ ['Nederlands',      ['nl-NL']],
+ ['Norsk bokmål',    ['nb-NO']],
+ ['Polski',          ['pl-PL']],
+ ['Português',       ['pt-BR', 'Brasil'],
+                     ['pt-PT', 'Portugal']],
+ ['Română',          ['ro-RO']],
+ ['Slovenčina',      ['sk-SK']],
+ ['Suomi',           ['fi-FI']],
+ ['Svenska',         ['sv-SE']],
+ ['Türkçe',          ['tr-TR']],
+ ['български',       ['bg-BG']],
+ ['Pусский',         ['ru-RU']],
+ ['Српски',          ['sr-RS']],
+ ['한국어',            ['ko-KR']],
+ ['中文',             ['cmn-Hans-CN', '普通话 (中国大陆)'],
+                     ['cmn-Hans-HK', '普通话 (香港)'],
+                     ['cmn-Hant-TW', '中文 (台灣)'],
+                     ['yue-Hant-HK', '粵語 (香港)']],
+ ['日本語',           ['ja-JP']],
+ ['Lingua latīna',   ['la']]];
+
+for (var i = 0; i < langs.length; i++) {
+  select_language.options[i] = new Option(langs[i][0], i);
+}
+select_language.selectedIndex = 6;
+updateCountry();
+select_dialect.selectedIndex = 6;
+showInfo('info_start');
+
+function updateCountry() {
+  for (var i = select_dialect.options.length - 1; i >= 0; i--) {
+    select_dialect.remove(i);
+  }
+  var list = langs[select_language.selectedIndex];
+  for (var i = 1; i < list.length; i++) {
+    select_dialect.options.add(new Option(list[i][1], list[i][0]));
+  }
+  select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
+}
+
+var create_email = false;
+var final_transcript = '';
+var recognizing = false;
+var ignore_onend;
+var start_timestamp;
+if (!('webkitSpeechRecognition' in window)) {
+  upgrade();
+} else {
+  //start_button.style.display = 'inline-block';
+  var recognition = new webkitSpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = function() {
+    recognizing = true;
+    showInfo('info_speak_now');
+    start_img.src = 'mic-animate.gif';
+
+    /* Reset Counters for Task1 */
+
+    min_count = 0;
+    sec_show = 0;
+    words_count = 0;
+    rate = 0;
+    error = '<br> &nbsp;';
+
+    /*--------------*/
+  };
+
+  recognition.onerror = function(event) {
+    if (event.error == 'no-speech') {
+      start_img.src = 'mic.gif';
+      showInfo('info_no_speech');
+      ignore_onend = true;
+    }
+    if (event.error == 'audio-capture') {
+      start_img.src = 'mic.gif';
+      showInfo('info_no_microphone');
+      ignore_onend = true;
+    }
+    if (event.error == 'not-allowed') {
+      if (event.timeStamp - start_timestamp < 100) {
+        showInfo('info_blocked');
+      } else {
+        showInfo('info_denied');
+      }
+      ignore_onend = true;
+    }
+  };
+
+  recognition.onend = function() {
+    recognizing = false;
+    if (ignore_onend) {
+      return;
+    }
+    start_img.src = 'mic.gif';
+    if (!final_transcript) {
+      showInfo('info_start');
+      return;
+    }
+    showInfo('');
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges();
+      var range = document.createRange();
+      range.selectNode(document.getElementById('final_span'));
+      window.getSelection().addRange(range);
+    }
+    if (create_email) {
+      create_email = false;
+      createEmail();
+    }
+  };
+
+  recognition.onresult = function(event) {
+    var interim_transcript = '';
+    for (var i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        final_transcript += event.results[i][0].transcript;
+      } else {
+        interim_transcript += event.results[i][0].transcript;
+      }
+    }
+
+    final_transcript = capitalize(final_transcript);
+    final_span.innerHTML = linebreak(final_transcript);
+    interim_span.innerHTML = linebreak(interim_transcript);
+    if (final_transcript || interim_transcript) {
+      showButtons('inline-block');
+    }
+  };
+}
+
+function upgrade() {
+  start_button.style.visibility = 'hidden';
+  showInfo('info_upgrade');
+}
+
+var two_line = /\n\n/g;
+var one_line = /\n/g;
+function linebreak(s) {
+  return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
+}
+
+var first_char = /\S/;
+function capitalize(s) {
+  return s.replace(first_char, function(m) { return m.toUpperCase(); });
+}
+
+function createEmail() {
+  var n = final_transcript.indexOf('\n');
+  if (n < 0 || n >= 80) {
+    n = 40 + final_transcript.substring(40).indexOf(' ');
+  }
+  var subject = encodeURI(final_transcript.substring(0, n));
+  var body = encodeURI(final_transcript.substring(n + 1));
+  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+}
+
+function copyButton() {
+  if (recognizing) {
+    recognizing = false;
+    recognition.stop();
+  }
+  copy_button.style.display = 'none';
+  copy_info.style.display = 'inline-block';
+  showInfo('');
+}
+
+function emailButton() {
+  if (recognizing) {
+    create_email = true;
+    recognizing = false;
+    recognition.stop();
+  } else {
+    createEmail();
+  }
+  email_button.style.display = 'none';
+  email_info.style.display = 'inline-block';
+  showInfo('');
+}
+
+function startButton(event) {
+  if (recognizing) {
+    recognition.stop();
+    return;
+  }
+  final_transcript = '';
+  recognition.lang = select_dialect.value;
+  recognition.start();
+  ignore_onend = false;
+  final_span.innerHTML = '';
+  interim_span.innerHTML = '';
+  start_img.src = 'mic-slash.gif';
+  showInfo('info_allow');
+  showButtons('none');
+  if (event) {
+    start_timestamp = event.timeStamp;
+  } else {
+    start_timestamp = Date().now;
+  }
+}
+
+function showInfo(s) {
+  if (s) {
+    for (var child = info.firstChild; child; child = child.nextSibling) {
+      if (child.style) {
+        child.style.display = child.id == s ? 'inline' : 'none';
+      }
+    }
+    info.style.visibility = 'visible';
+  } else {
+    info.style.visibility = 'hidden';
+  }
+}
+
+var current_style;
+function showButtons(style) {
+  if (style == current_style) {
+    return;
+  }
+  current_style = style;
+  copy_button.style.display = style;
+  email_button.style.display = style;
+  copy_info.style.display = 'none';
+  email_info.style.display = 'none';
+}
+</script>
